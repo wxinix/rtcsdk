@@ -110,24 +110,24 @@ struct attach_t
 {
 };
 
-template<typename Interface>
+template<typename T>
 class ref;
 
-template<typename Interface>
+template<typename T>
 class __declspec(empty_bases) com_ptr
 {
-  friend class ref<Interface>;
+  friend class ref<T>;
 
-  friend Interface *&internal_get(com_ptr<Interface> &obj) noexcept
+  friend T *&internal_get(com_ptr<T> &obj) noexcept
   {
     return obj.p_;
   }
 
 private:
-  Interface *p_{};
+  T *p_{};
 
 #if RTCSDK_HAS_CHECKED_REFS
-  std::vector<ref<Interface> *> weaks_;
+  std::vector<ref<T> *> weaks_;
 #endif
 
 #if RTCSDK_HAS_LEAK_DETECTION
@@ -141,7 +141,7 @@ private:
 
   // smart construction from other interfaces
   template<typename OtherInterface>
-  com_ptr(OtherInterface *punk, std::true_type) noexcept : p_{static_cast<Interface *>(punk)}
+  com_ptr(OtherInterface *punk, std::true_type) noexcept : p_{static_cast<T *>(punk)}
   {
     addref_pointer(p_);
   }
@@ -150,7 +150,7 @@ private:
   com_ptr(OtherInterface *punk, std::false_type) noexcept
   {
     if (punk) {
-      punk->QueryInterface(get_interface_guid(interface_wrapper<Interface>{}), reinterpret_cast<void **>(&p_));
+      punk->QueryInterface(get_interface_guid(interface_wrapper<T>{}), reinterpret_cast<void **>(&p_));
       store_cookie();
     }
   }
@@ -161,7 +161,8 @@ private:
   com_ptr(com_ptr<OtherInterface> &&o, std::false_type) noexcept
   {
     if (o) {
-      if (SUCCEEDED(o->QueryInterface(get_interface_guid(interface_wrapper<Interface>{}), reinterpret_cast<void **>(&p_)))) {
+      if (SUCCEEDED(o->QueryInterface(get_interface_guid(interface_wrapper<T>{}),
+                                      reinterpret_cast<void **>(&p_)))) {
         store_cookie();
         o.release();
       }
@@ -169,10 +170,10 @@ private:
   }
 
   template<typename OtherInterface>
-  com_ptr(com_ptr<OtherInterface> &&o, std::true_type) noexcept : p_{static_cast<Interface *>(o.get())}
+  com_ptr(com_ptr<OtherInterface> &&o, std::true_type) noexcept : p_{static_cast<T *>(o.get())}
 #if RTCSDK_HAS_LEAK_DETECTION
-                                                                  ,
-                                                                  cookie_{internal_get_cookie(o)}
+  ,
+  cookie_{internal_get_cookie(o)}
 #endif
   {
     internal_get(o) = nullptr;
@@ -185,13 +186,13 @@ private:
   com_ptr(const com_ptr<OtherInterface> &o, std::false_type) noexcept
   {
     if (o) {
-      o->QueryInterface(get_interface_guid(interface_wrapper<Interface>{}), reinterpret_cast<void **>(&p_));
+      o->QueryInterface(get_interface_guid(interface_wrapper<T>{}), reinterpret_cast<void **>(&p_));
       store_cookie();
     }
   }
 
   template<typename OtherInterface>
-  com_ptr(const com_ptr<OtherInterface> &o, std::true_type) noexcept : p_{static_cast<Interface *>(o.get())}
+  com_ptr(const com_ptr<OtherInterface> &o, std::true_type) noexcept : p_{static_cast<T *>(o.get())}
   {
     addref_pointer(p_);
   }
@@ -236,29 +237,29 @@ public:
   {
   }
 
-  com_ptr(Interface *p) noexcept : p_{p}
+  com_ptr(T *p) noexcept: p_{p}
   {
     addref_pointer(p);
   }
 
   // the following constructor does not call addref (attaching constructor)
-  com_ptr(attach_t, Interface *p) noexcept : p_{p}
+  com_ptr(attach_t, T *p) noexcept: p_{p}
   {
     store_cookie();// might get incorrect cookie, check
   }
 
   template<typename OtherInterface>
-  com_ptr(OtherInterface *punk) noexcept : com_ptr(punk, std::is_base_of<Interface, OtherInterface>{})
+  com_ptr(OtherInterface *punk) noexcept : com_ptr(punk, std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  com_ptr(const com_ptr<OtherInterface> &o) noexcept : com_ptr(o, std::is_base_of<Interface, OtherInterface>{})
+  com_ptr(const com_ptr<OtherInterface> &o) noexcept : com_ptr(o, std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  com_ptr(com_ptr<OtherInterface> &&o) noexcept : com_ptr(std::move(o), std::is_base_of<Interface, OtherInterface>{})
+  com_ptr(com_ptr<OtherInterface> &&o) noexcept : com_ptr(std::move(o), std::is_base_of<T, OtherInterface>{})
   {
   }
 
@@ -283,7 +284,7 @@ public:
 #endif
   }
 
-  com_ptr(const com_ptr &o) noexcept : p_{o.p_}
+  com_ptr(const com_ptr &o) noexcept: p_{o.p_}
   {
     addref_pointer(p_);
   }
@@ -299,10 +300,10 @@ public:
     return *this;
   }
 
-  com_ptr(com_ptr &&o) noexcept : p_{o.p_}
+  com_ptr(com_ptr &&o) noexcept: p_{o.p_}
 #if RTCSDK_HAS_LEAK_DETECTION
-                                  ,
-                                  cookie_{o.cookie_}
+  ,
+  cookie_{o.cookie_}
 #endif
   {
     o.p_ = nullptr;
@@ -320,7 +321,7 @@ public:
     return *this;
   }
 
-  Interface *operator->() const noexcept
+  T *operator->() const noexcept
   {
     return p_;
   }
@@ -336,22 +337,22 @@ public:
     return p_ != o.p_;
   }
 
-  bool operator==(Interface *pother) const noexcept
+  bool operator==(T *pother) const noexcept
   {
     return p_ == pother;
   }
 
-  bool operator!=(Interface *pother) const noexcept
+  bool operator!=(T *pother) const noexcept
   {
     return p_ != pother;
   }
 
-  friend bool operator==(Interface *p1, const com_ptr &p2) noexcept
+  friend bool operator==(T *p1, const com_ptr &p2) noexcept
   {
     return p1 == p2.p_;
   }
 
-  friend bool operator!=(Interface *p1, const com_ptr &p2) noexcept
+  friend bool operator!=(T *p1, const com_ptr &p2) noexcept
   {
     return p1 != p2.p_;
   }
@@ -363,16 +364,16 @@ public:
   }
 
   // Attach and detach operations
-  void attach(Interface *p) noexcept
+  void attach(T *p) noexcept
   {
     assert(!p);
     p_ = p;
     store_cookie();// might get incorrect cookie
   }
 
-  [[nodiscard]] Interface *detach() noexcept
+  [[nodiscard]] T *detach() noexcept
   {
-    Interface *cur{};
+    T *cur{};
     std::swap(cur, p_);
 #if RTCSDK_HAS_LEAK_DETECTION
     cookie_ = 0;
@@ -382,7 +383,7 @@ public:
   }
 
   // Pointer accessors
-  Interface *get() const noexcept
+  T *get() const noexcept
   {
     return p_;
   }
@@ -394,7 +395,7 @@ public:
   }
 #endif
 
-  Interface **put() noexcept
+  T **put() noexcept
   {
     assert(!p_ && "Using put on non-empty object is prohibited");
     return &p_;
@@ -407,21 +408,24 @@ public:
     return com_ptr<Interface>{*this};
   }
 
-  template<typename T>
-  HRESULT QueryInterface(T **ppresult) const
+  template<typename Interface>
+  HRESULT QueryInterface(Interface **ppresult) const
   {
-    return p_->QueryInterface(get_interface_guid(interface_wrapper<T>{}), reinterpret_cast<void **>(ppresult));
+    return p_->QueryInterface(get_interface_guid(interface_wrapper<Interface>{}), reinterpret_cast<void **>(ppresult));
   }
 
   HRESULT CoCreateInstance(const GUID &clsid, IUnknown *pUnkOuter = nullptr, DWORD dwClsContext = CLSCTX_ALL) noexcept
   {
     assert(!p_ && "Calling CoCreateInstance on initialized object is prohibited");
-    SCOPE_EXIT
-    {
+    SCOPE_EXIT {
       store_cookie();
     };
 
-    return ::CoCreateInstance(clsid, pUnkOuter, dwClsContext, get_interface_guid(interface_wrapper<Interface>{}), reinterpret_cast<void **>(&p_));
+    return ::CoCreateInstance(clsid,
+                              pUnkOuter,
+                              dwClsContext,
+                              get_interface_guid(interface_wrapper<T>{}),
+                              reinterpret_cast<void **>(&p_));
   }
 
   HRESULT create_instance(const GUID &clsid, IUnknown *pUnkOuter = nullptr, DWORD dwClsContext = CLSCTX_ALL) noexcept
@@ -440,12 +444,12 @@ public:
   }
 
 #if RTCSDK_HAS_CHECKED_REFS
-  void add_weak(ref<Interface> *pweak)
+  void add_weak(ref<T> *pweak)
   {
     weaks_.push_back(pweak);
   }
 
-  void remove_weak(ref<Interface> *pweak)
+  void remove_weak(ref<T> *pweak)
   {
     std::erase(weaks_, pweak);
   }
@@ -454,24 +458,24 @@ public:
 
 constexpr const attach_t attach = {};
 
-template<typename Interface>
+template<typename T>
 class __declspec(empty_bases) ref
 {
-  Interface *p_{};
+  T *p_{};
 #if RTCSDK_HAS_CHECKED_REFS
-  com_ptr<Interface> *parent_{};
+  com_ptr<T> *parent_{};
 #endif
   struct move_tag
   {
   };
 
   template<typename OtherInterface>
-  ref(OtherInterface *p, std::true_type) noexcept : p_{static_cast<Interface *>(p)}
+  ref(OtherInterface *p, std::true_type) noexcept : p_{static_cast<T *>(p)}
   {
   }
 
   template<typename OtherInterface>
-  ref(com_ptr<OtherInterface> &&o, std::true_type) noexcept : p_{static_cast<Interface *>(o.p_)}
+  ref(com_ptr<OtherInterface> &&o, std::true_type) noexcept : p_{static_cast<T *>(o.p_)}
   {
 #if RTCSDK_HAS_CHECKED_REFS
     parent_ = &o;
@@ -492,11 +496,11 @@ public:
   {
   }
 
-  ref(const com_ptr<Interface> &o) noexcept : p_{o.p_}
+  ref(const com_ptr<T> &o) noexcept: p_{o.p_}
   {
   }
 
-  ref(com_ptr<Interface> &&o) noexcept : p_{o.p_}
+  ref(com_ptr<T> &&o) noexcept: p_{o.p_}
   {
 #if RTCSDK_HAS_CHECKED_REFS
     parent_ = &o;
@@ -507,17 +511,19 @@ public:
 
   // allow construction from derived interfaces
   template<typename OtherInterface>
-  ref(const com_ptr<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<Interface, OtherInterface>{})
+  ref(const com_ptr<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  ref(com_ptr<OtherInterface> &&o) noexcept : ref(move_tag{}, std::move(o), std::is_base_of<Interface, OtherInterface>{})
+  ref(com_ptr<OtherInterface> &&o) noexcept : ref(move_tag{},
+                                                  std::move(o),
+                                                  std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  ref(const ref<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<Interface, OtherInterface>{})
+  ref(const ref<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<T, OtherInterface>{})
   {
   }
 
@@ -536,7 +542,7 @@ public:
     }
   }
 
-  ref(ref &&o) noexcept : p_{o.p_}, parent_{o.parent_}
+  ref(ref &&o) noexcept: p_{o.p_}, parent_{o.parent_}
   {
     if (parent_) {
       parent_->remove_weak(&o);
@@ -545,14 +551,14 @@ public:
   }
 #endif
 
-  ref(Interface *p) noexcept : p_{p}
+  ref(T *p) noexcept: p_{p}
   {
   }
 
-  template<typename T>
-  ref &operator=(const T &) = delete;
+  template<typename Interface>
+  ref &operator=(const Interface &) = delete;
 
-  Interface *operator->() const noexcept
+  T *operator->() const noexcept
   {
     return p_;
   }
@@ -568,32 +574,32 @@ public:
     return p_ != o.p_;
   }
 
-  bool operator==(Interface *pother) const noexcept
+  bool operator==(T *pother) const noexcept
   {
     return p_ == pother;
   }
 
-  bool operator!=(Interface *pother) const noexcept
+  bool operator!=(T *pother) const noexcept
   {
     return p_ != pother;
   }
 
-  friend bool operator==(Interface *p1, const ref &p2) noexcept
+  friend bool operator==(T *p1, const ref &p2) noexcept
   {
     return p1 == p2.p_;
   }
 
-  friend bool operator!=(Interface *p1, const ref &p2) noexcept
+  friend bool operator!=(T *p1, const ref &p2) noexcept
   {
     return p1 != p2.p_;
   }
 
-  bool operator==(const com_ptr<Interface> &o) noexcept
+  bool operator==(const com_ptr<T> &o) noexcept
   {
     return p_ == o.p_;
   }
 
-  bool operator!=(const com_ptr<Interface> &o) noexcept
+  bool operator!=(const com_ptr<T> &o) noexcept
   {
     return p_ != o.p_;
   }
@@ -605,7 +611,7 @@ public:
   }
 
   // Pointer accessors
-  Interface *get() const noexcept
+  T *get() const noexcept
   {
     return p_;
   }
