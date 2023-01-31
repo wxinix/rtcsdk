@@ -1,10 +1,16 @@
+#pragma warning( disable : 4068 )
 #pragma once
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedTemplateParameterInspection"
+#pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
+#pragma ide diagnostic ignored "OCUnusedStructInspection"
 
 #include <tuple>
 
 namespace rtcsdk::details {
 
-template<typename... Types>
+template<typename... Ts>
 struct vector
 {
   using type = vector;
@@ -13,55 +19,55 @@ struct vector
 template<typename T>
 struct size;
 
-template<typename... Types>
-struct size<vector<Types...>>
+template<typename... Ts>
+struct size<vector<Ts...>>
 {
-  static const size_t value = sizeof...(Types);
+  static const size_t value = sizeof...(Ts);
 };
 
-template<typename Vector, typename T>
+template<typename Dest, typename T>
 struct push_back;
 
-template<typename... Types, typename T>
-struct push_back<vector<Types...>, T>
+template<typename... Ts, typename T>
+struct push_back<vector<Ts...>, T>
 {
-  using type = vector<Types..., T>;
+  using type = vector<Ts..., T>;
 };
 
-template<typename Vector, typename T>
-using push_back_t = typename push_back<Vector, T>::type;
+template<typename Dest, typename T>
+using push_back_t = typename push_back<Dest, T>::type;
 
-template<typename Vector, typename T>
+template<typename Dest, typename T>
 struct push_front;
 
-template<typename... Types, typename T>
-struct push_front<vector<Types...>, T>
+template<typename... Ts, typename T>
+struct push_front<vector<Ts...>, T>
 {
-  using type = vector<T, Types...>;
+  using type = vector<T, Ts...>;
 };
 
-template<typename Vector, typename T>
-using push_front_t = typename push_front<Vector, T>::type;
+template<typename Dest, typename T>
+using push_front_t = typename push_front<Dest, T>::type;
 
-template<typename A, class B>
+template<typename A, typename B>
 struct append;
 
-template<typename... Types, typename B>
-struct append<vector<Types...>, B>
+template<typename... Ts, typename T>
+struct append<vector<Ts...>, T>
 {
-  using type = vector<Types..., B>;
+  using type = vector<Ts..., T>;
 };
 
-template<typename A, typename... Types>
-struct append<A, vector<Types...>>
+template<typename T, typename... Ts>
+struct append<T, vector<Ts...>>
 {
-  using type = vector<A, Types...>;
+  using type = vector<T, Ts...>;
 };
 
-template<typename... TypesA, typename... TypesB>
-struct append<vector<TypesA...>, vector<TypesB...>>
+template<typename... Ls, typename... Rs>
+struct append<vector<Ls...>, vector<Rs...>>
 {
-  using type = vector<TypesA..., TypesB...>;
+  using type = vector<Ls..., Rs...>;
 };
 
 template<typename A, typename B>
@@ -82,8 +88,8 @@ using front_t = typename front<T>::type;
 template<typename T>
 struct back;
 
-template<typename... First, typename Last>
-struct back<vector<First..., Last>>
+template<typename... Rest, typename Last>
+struct back<vector<Rest..., Last>>
 {
   using type = Last;
 };
@@ -106,10 +112,10 @@ using remove_front_t = typename remove_front<T>::type;
 template<typename T>
 struct remove_back;
 
-template<typename... First, typename Last>
-struct remove_back<vector<First..., Last>>
+template<typename... Rest, typename Last>
+struct remove_back<vector<Rest..., Last>>
 {
-  using type = vector<First...>;
+  using type = vector<Rest...>;
 };
 
 template<typename T>
@@ -118,13 +124,16 @@ using remove_back_t = typename remove_back<T>::type;
 template<typename T>
 struct as_tuple;
 
-template<typename... Types>
-struct as_tuple<vector<Types...>>
+template<typename... Ts>
+struct as_tuple<vector<Ts...>>
 {
-  using type = std::tuple<Types...>;
+  using type = std::tuple<Ts...>;
 };
 
 template<typename T>
 using as_tuple_t = typename as_tuple<T>::type;
 
 }// end of namespace rtcsdk::details
+
+#pragma clang diagnostic pop
+#pragma warning( default : 4068 )
