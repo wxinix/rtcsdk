@@ -56,23 +56,20 @@ struct __declspec(empty_bases) embeds_interface_id
 };
 
 template<typename T>
-concept has_get_first =
-    requires {
-      T::get_first();
-    };
+concept has_get_first = requires {
+  T::get_first();
+};
 
 template<typename T>
-concept has_implements =
-    requires {
-      typename T::can_query;
-    };
+concept has_implements = requires {
+  typename T::can_query;
+};
 
 template<typename T>
-concept has_increments_module_count =
-    requires {
-      typename T::increments_module_count_t;
-      requires std::same_as<typename T::increments_module_count_t, increments_module_count_t>;
-    };
+concept has_increments_module_count = requires {
+  typename T::increments_module_count_t;
+  requires std::same_as<typename T::increments_module_count_t, increments_module_count_t>;
+};
 
 template<typename T, class>
 struct has_supports_aggregation_impl : std::false_type
@@ -80,7 +77,9 @@ struct has_supports_aggregation_impl : std::false_type
 };
 
 template<typename T>
-struct has_supports_aggregation_impl<T, std::void_t<std::is_same<typename T::supports_aggregation_t, supports_aggregation_t>>> : std::true_type
+struct has_supports_aggregation_impl<T,
+                                     std::void_t<std::is_same<typename T::supports_aggregation_t,
+                                                              supports_aggregation_t>>> : std::true_type
 {
 };
 
@@ -93,7 +92,9 @@ struct has_enable_leak_detector_impl : std::false_type
 };
 
 template<typename T>
-struct has_enable_leak_detector_impl<T, std::void_t<std::is_same<typename T::enable_leak_detection_t, enable_leak_detection_t>>> : std::true_type
+struct has_enable_leak_detector_impl<T,
+                                     std::void_t<std::is_same<typename T::enable_leak_detection_t,
+                                                              enable_leak_detection_t>>> : std::true_type
 {
 };
 
@@ -109,7 +110,8 @@ struct has_singleton_factory_impl : std::false_type
 };
 
 template<typename T>
-struct has_singleton_factory_impl<T, std::void_t<std::is_same<typename T::singleton_factory_t, singleton_factory_t>>> : std::true_type
+struct has_singleton_factory_impl<T, std::void_t<std::is_same<typename T::singleton_factory_t, singleton_factory_t>>>
+    : std::true_type
 {
 };
 
@@ -122,7 +124,9 @@ struct has_smart_singleton_factory_impl : std::false_type
 };
 
 template<typename T>
-struct has_smart_singleton_factory_impl<T, std::void_t<std::is_same<typename T::smart_singleton_factory_t, smart_singleton_factory_t>>> : std::true_type
+struct has_smart_singleton_factory_impl<T,
+                                        std::void_t<std::is_same<typename T::smart_singleton_factory_t,
+                                                                 smart_singleton_factory_t>>> : std::true_type
 {
 };
 
@@ -154,7 +158,7 @@ inline void *query(T *pobj, const GUID &iid, details::vector<Interfaces...>) noe
 }
 
 template<typename... Interfaces>
-struct __declspec(empty_bases) extends_base : public Interfaces...
+struct __declspec(empty_bases) extends_base : public Interfaces ...
 {
   template<typename Derived>
   static void *query_children(Derived *pobject, const GUID &riid) noexcept
@@ -253,7 +257,8 @@ struct __declspec(empty_bases) aggregates
   static void *query_self(Derived *pobject, const GUID &iid) noexcept
   {
     void *result{nullptr};
-    (... || (iid == get_interface_guid(interface_wrapper<Interfaces>{}) ? (result = static_cast<ThisClass *>(pobject)->on_query(interface_wrapper<Interfaces>{})), true : false));
+    (... || (iid == get_interface_guid(interface_wrapper<Interfaces>{}) ? (result = static_cast<ThisClass *>(pobject)
+        ->on_query(interface_wrapper<Interfaces>{})), true : false));
     return result;
   }
 };
@@ -274,41 +279,28 @@ struct __declspec(empty_bases) also// no inheriting from interfaces!
 };
 
 template<typename T, typename... Args>
-concept has_legacy_final_construct =
-    requires(T obj, Args &&...args) {
-      {
-        obj.FinalConstruct(std::forward<Args>(args)...)
-        } -> std::same_as<HRESULT>;
-    };
+concept has_legacy_final_construct =requires(T obj, Args &&...args) {
+  {
+  obj.FinalConstruct(std::forward<Args>(args)...)
+  } -> std::same_as<HRESULT>;
+};
 
 template<typename T, typename... Args>
-concept has_final_construct =
-    requires(T obj, Args &&...args) {
-      {
-        obj.final_construct(std::forward<Args>(args)...)
-        } -> std::same_as<HRESULT>;
-    };
-
-//template<typename T, typename Pack, typename Enable>
-//struct has_final_construct_impl : std::false_type {};
-
-//template<typename T, typename... Args>
-//struct has_final_construct_impl<T, details::vector<Args...>, decltype(void(std::declval<T &>().FinalConstruct(std::declval<Args>()...)))> : std::true_type {};
-
-//template<typename T, typename... Args>
-//using has_final_construct = has_final_construct_impl<T, details::vector<Args...>, void>;
+concept has_final_construct =requires(T obj, Args &&...args) {
+  {
+  obj.final_construct(std::forward<Args>(args)...)
+  } -> std::same_as<HRESULT>;
+};
 
 template<typename T>
-concept has_legacy_final_release =
-    requires(T val) {
-      val.FinalRelease();
-    };
+concept has_legacy_final_release =requires(T val) {
+  val.FinalRelease();
+};
 
 template<typename T, typename Holder = T>
-concept has_final_release =
-    requires(std::unique_ptr<Holder> instance) {
-      T::final_release(std::move(instance));
-    };
+concept has_final_release =requires(std::unique_ptr<Holder> instance) {
+  T::final_release(std::move(instance));
+};
 
 template<typename T, typename Enable>
 struct has_on_release_impl : std::false_type
@@ -316,7 +308,8 @@ struct has_on_release_impl : std::false_type
 };
 
 template<typename T>
-struct has_on_release_impl<T, decltype(void(std::declval<const T &>().on_release(std::declval<int>())))> : std::true_type
+struct has_on_release_impl<T, decltype(void(std::declval<const T &>().on_release(std::declval<int>())))>
+    : std::true_type
 {
 };
 
@@ -329,7 +322,8 @@ struct has_on_add_ref_impl : std::false_type
 };
 
 template<typename T>
-struct has_on_add_ref_impl<T, decltype(void(std::declval<const T &>().on_add_ref(std::declval<int>())))> : std::true_type
+struct has_on_add_ref_impl<T, decltype(void(std::declval<const T &>().on_add_ref(std::declval<int>())))>
+    : std::true_type
 {
 };
 
@@ -463,7 +457,8 @@ struct __declspec(empty_bases) final_construct_support : Base, usage_map_base<ha
   template<typename... Args>
   void do_final_construct([[maybe_unused]] Derived &obj, [[maybe_unused]] Args &&...args)
   {
-    static_assert(!has_legacy_final_construct<Derived, Args...>, "Legacy FinalConstruct no longer supported. Replace with new final_construct (syntax does not change).");
+    static_assert(!has_legacy_final_construct<Derived, Args...>,
+                  "Legacy FinalConstruct not supported. Replace with new final_construct (syntax does not change).");
 
     if constexpr (has_final_construct<Derived, Args...>) {
       Base::safe_increment();
@@ -482,7 +477,8 @@ struct __declspec(empty_bases) final_construct_support : Base, usage_map_base<ha
   template<typename Holder>
   static void do_final_release(std::unique_ptr<Holder> obj, [[maybe_unused]] std::atomic<int> &refcount) noexcept
   {
-    static_assert(!has_legacy_final_release<Derived>, "Legacy FinalRelease no longer supported. Use new style final_release instead");
+    static_assert(!has_legacy_final_release<Derived>,
+                  "Legacy FinalRelease not supported. Use new style final_release instead");
 
     if constexpr (has_final_release<Derived, Holder>) {
       // allow for safe QueryInterface for an overloaded final_release function
@@ -513,7 +509,6 @@ struct __declspec(empty_bases) final_construct_support : Base, usage_map_base<ha
     debug_on_add_ref(obj, value, has_on_add_ref<Derived>{});
   }
 
-  //
   static void debug_on_release(const Derived &obj, int value, std::true_type) noexcept
   {
     obj.on_release(value);
@@ -539,7 +534,10 @@ public:
   template<typename... Args>
   aggvalue(IUnknown *pOuterUnk, Args &&...args) : object_{pOuterUnk, std::forward<Args>(args)...}
   {
-    static_assert(!has_final_release<Derived> || has_final_release<Derived, aggvalue<Derived>>, "Class overrides final_release, but does not work with aggregate values. Consider taking templated holder if your object can be aggregated.");
+    static_assert(!has_final_release<Derived> || has_final_release<Derived, aggvalue<Derived>>,
+                  "Class overrides final_release, but does not work with aggregate values."
+                  "Consider taking templated holder if your object can be aggregated.");
+
     this->do_final_construct(object_);
   }
 
@@ -578,7 +576,8 @@ private:
 };
 
 template<typename DerivedNonMatchingName>
-class __declspec(empty_bases) value : public DerivedNonMatchingName, public final_construct_support<DerivedNonMatchingName, ref_count_base>
+class __declspec(empty_bases) value
+    : public DerivedNonMatchingName, public final_construct_support<DerivedNonMatchingName, ref_count_base>
 {
 public:
   virtual ~value() = default;
@@ -656,7 +655,8 @@ public:
 #if defined(_DEBUG)
   ~value_on_stack()
   {
-    assert(0 == this->_rc_refcount.load(std::memory_order_relaxed) && "value_on_stack is destroyed with active reference!");
+    assert(0 == this->_rc_refcount.load(std::memory_order_relaxed)
+               && "value_on_stack is destroyed with active reference!");
   }
 #endif
 
@@ -734,17 +734,18 @@ private:
   }
 
 public:
-  object_holder(std::unique_ptr<T> &&value) noexcept : value_{std::move(value)}
+  object_holder(std::unique_ptr<T> &&value) noexcept: value_{std::move(value)}
   {
   }
 
   template<typename Interface>
-  std::enable_if_t<std::is_convertible_v<T *, Interface *> || std::is_same_v<IUnknown, Interface>, com_ptr<Interface>> to_ptr() &&noexcept
+  std::enable_if_t<std::is_convertible_v<T *, Interface *> || std::is_same_v<IUnknown, Interface>,
+                   com_ptr<Interface>> to_ptr() && noexcept
   {
     return get_impl<Interface>(std::is_same<IUnknown, Interface>{});
   }
 
-  auto to_ptr() &&noexcept
+  auto to_ptr() && noexcept
   {
     return std::move(*this).to_ptr<typename T::DefaultInterface>();
   }
@@ -839,20 +840,24 @@ public:
   template<typename... Args>
   static object_holder<value<Derived>> create_instance(Args &&...args)
   {
-    static_assert(!check_trait<has_smart_singleton_factory>(), "Objects marked as single_cached_instance (AKA smart_singleton_factory) cannot be currently created using create_instance method");
+    static_assert(!check_trait<has_smart_singleton_factory>(),
+                  "Objects marked as single_cached_instance (AKA smart_singleton_factory)"
+                  "cannot be currently created using create_instance method");
     return {std::make_unique<value<Derived>>(std::forward<Args>(args)...)};
   }
 
   template<typename... Args>
   static com_ptr<IUnknown> create_aggregate(IUnknown *pOuterUnknown, Args &&...args)
   {
-    static_assert(check_trait<has_supports_aggregation>(), "Class is missing supports_aggregation type trait to support aggregation");
+    static_assert(check_trait<has_supports_aggregation>(),
+                  "Class is missing supports_aggregation type trait to support aggregation");
     auto pobject = std::make_unique<aggvalue<Derived>>(pOuterUnknown, std::forward<Args>(args)...);
     return static_cast<IUnknown *>(pobject.release());
   }
 
   template<typename Interface = FirstInterface>
-  std::enable_if_t<std::is_convertible_v<Derived *, Interface *> || std::is_same_v<IUnknown, Interface>, com_ptr<Interface>> create_copy() const
+  std::enable_if_t<std::is_convertible_v<Derived *, Interface *> || std::is_same_v<IUnknown, Interface>,
+                   com_ptr<Interface>> create_copy() const
   {
     return create_copy_impl<Interface>(std::is_same<IUnknown, Interface>{});
   }
@@ -873,7 +878,9 @@ protected:
 };
 
 template<typename Derived, typename FirstInterface, typename... OtherInterfaces>
-inline HRESULT object<Derived, FirstInterface, OtherInterfaces...>::factory_create_object(const GUID &iid, void **ppv, IUnknown *pOuterUnk) noexcept
+inline HRESULT object<Derived, FirstInterface, OtherInterfaces...>::factory_create_object(const GUID &iid,
+                                                                                          void **ppv,
+                                                                                          IUnknown *pOuterUnk) noexcept
 {
   try {
     HRESULT hr;
@@ -907,7 +914,8 @@ inline HRESULT object<Derived, FirstInterface, OtherInterfaces...>::factory_crea
       }
     } else {
       if constexpr (check_trait<has_supports_aggregation>()) {
-        assert(iid == get_interface_guid(interface_wrapper<IUnknown>{}) && "Only IUnknown may be queried for an object being created aggregated");
+        assert(iid == get_interface_guid(interface_wrapper<IUnknown>{})
+                   && "Only IUnknown may be queried for an object being created aggregated");
         auto object = std::make_unique<aggvalue<Derived>>(pOuterUnk);
         hr = object->QueryInterface(iid, ppv);
         if (SUCCEEDED(hr)) {
@@ -959,17 +967,19 @@ inline HRESULT create_object(const GUID &clsid, const GUID &iid, void **ppv, IUn
 template<typename Interface>
 inline HRESULT create_object(const GUID &clsid, com::ptr<Interface> &result, IUnknown *pOuterUnk = nullptr) noexcept
 {
-  return create_object(clsid, get_interface_guid(interface_wrapper<Interface>{}), reinterpret_cast<void **>(result.put()), pOuterUnk);
+  return create_object(clsid,
+                       get_interface_guid(interface_wrapper<Interface>{}),
+                       reinterpret_cast<void **>(result.put()),
+                       pOuterUnk);
 }
 
 template<typename Interface>
 inline com::ptr<Interface> create_object(const GUID &clsid, IUnknown *pOuterUnk = nullptr)
 {
   com::ptr<Interface> result;
-  throw_on_failed(create_object(
-      clsid,
-      get_interface_guid(details::interface_wrapper<Interface>{}),
-      reinterpret_cast<void **>(result.put()), pOuterUnk));
+  throw_on_failed(create_object(clsid,
+                                get_interface_guid(details::interface_wrapper<Interface>{}),
+                                reinterpret_cast<void **>(result.put()), pOuterUnk));
   return result;
 }
 #pragma endregion
