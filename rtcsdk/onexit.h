@@ -21,11 +21,11 @@ template<typename F, bool execute_on_exception>
 class scope_guard
 {
 public:
-  explicit scope_guard(const F &f) noexcept : f_{f}
+  explicit scope_guard(const F &f) noexcept: f_{f}
   {
   }
 
-  explicit scope_guard(F &&f) noexcept : f_{std::move(f)}
+  explicit scope_guard(F &&f) noexcept: f_{std::move(f)}
   {
   }
 
@@ -45,11 +45,11 @@ template<typename F>
 class scope_exit
 {
 public:
-  explicit scope_exit(const F &f) noexcept : f_{f}
+  explicit scope_exit(const F &f) noexcept: f_{f}
   {
   }
 
-  explicit scope_exit(F &&f) noexcept : f_{std::move(f)}
+  explicit scope_exit(F &&f) noexcept: f_{std::move(f)}
   {
   }
 
@@ -66,11 +66,11 @@ template<typename F>
 class scope_exit_cancellable
 {
 public:
-  explicit scope_exit_cancellable(const F &f) noexcept : f_{f}
+  explicit scope_exit_cancellable(const F &f) noexcept: f_{f}
   {
   }
 
-  explicit scope_exit_cancellable(F &&f) noexcept : f_{std::move(f)}
+  explicit scope_exit_cancellable(F &&f) noexcept: f_{std::move(f)}
   {
   }
 
