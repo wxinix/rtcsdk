@@ -11,16 +11,17 @@ class bad_hresult
 {
 public:
   constexpr bad_hresult() = default;
-  explicit constexpr bad_hresult(const HRESULT hr) noexcept : hr_{hr}
+
+  explicit constexpr bad_hresult(const HRESULT hr) noexcept: hr_{hr}
   {
   }
 
-  constexpr HRESULT hr() const noexcept
+  [[nodiscard]] constexpr HRESULT hr() const noexcept
   {
     return hr_;
   }
 
-  constexpr bool is_aborted() const noexcept
+  [[maybe_unused]] [[nodiscard]] constexpr bool is_aborted() const noexcept
   {
     return hr_ == HRESULT_FROM_WIN32(ERROR_OPERATION_ABORTED);
   }
@@ -31,7 +32,7 @@ private:
 
 [[noreturn]] inline void throw_bad_hresult(HRESULT hr)
 {
-  throw bad_hresult{hr};
+  throw bad_hresult{hr}; // NOLINT(hicpp-exception-baseclass)
 }
 
 /**
@@ -45,7 +46,7 @@ private:
 }
 
 /** Throw last win32 error as bad_hresult. */
-[[noreturn]] inline void throw_last_error()
+[[maybe_unused]] [[noreturn]] inline void throw_last_error()
 {
   throw_win32_error(GetLastError());
 }
