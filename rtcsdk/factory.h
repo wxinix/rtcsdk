@@ -3,31 +3,12 @@
 
 namespace rtcsdk {
 
-inline HRESULT DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) noexcept
-{
-  try {
-    auto factory = details::Factory::create_instance(rclsid).to_ptr<IUnknown>();
-    return factory->QueryInterface(riid, ppv);
-  } catch (const std::bad_alloc &) {
-    return E_OUTOFMEMORY;
-  } catch (const bad_hresult &err) {
-    return err.hr();
-  } catch (...) {
-    return E_FAIL;
-  }
-}
-
-inline HRESULT DllCanUnloadNow() noexcept
-{
-  return details::ModuleCount::lock_count.load(std::memory_order_relaxed) ? S_FALSE : S_OK;
-}
-
 namespace details {
 
 class __declspec(novtable) Factory : public object<Factory, IClassFactory>
 {
 public:
-  Factory(const CLSID &clsid) noexcept : clsid_{clsid}
+  Factory(const CLSID &clsid) noexcept: clsid_{clsid}
   {
   }
 
@@ -51,5 +32,24 @@ private:
 };
 
 }// namespace details
+
+inline HRESULT DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) noexcept
+{
+  try {
+    auto factory = details::Factory::create_instance(rclsid).to_ptr<IUnknown>();
+    return factory->QueryInterface(riid, ppv);
+  } catch (const std::bad_alloc &) {
+    return E_OUTOFMEMORY;
+  } catch (const bad_hresult &err) {
+    return err.hr();
+  } catch (...) {
+    return E_FAIL;
+  }
+}
+
+inline HRESULT DllCanUnloadNow() noexcept
+{
+  return details::ModuleCount::lock_count.load(std::memory_order_relaxed) ? S_FALSE : S_OK;
+}
 
 }// end namespace rtcsdk

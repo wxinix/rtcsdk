@@ -1,3 +1,7 @@
+#pragma warning( disable : 4068 )
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedMacroInspection"
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 
 #include <exception>
@@ -8,7 +12,7 @@ namespace rtcsdk::details {
 class UncaughtExceptionsCounter
 {
 public:
-  bool has_new_exceptions() const noexcept
+  [[nodiscard]] bool has_new_exceptions() const noexcept
   {
     return std::uncaught_exceptions() > exceptions_on_enter_;
   }
@@ -136,13 +140,16 @@ inline scope_exit_cancellable<std::decay_t<F>> operator+(ScopeGuardOnExitCancell
 #define ANONYMOUS_VARIABLE(x) PP_CAT(x, __COUNTER__)
 
 #define SCOPE_FAIL \
-  auto ANONYMOUS_VARIABLE(SCOPE_FAIL_STATE) = ::rtcsdk::details::ScopeGuardOnFail() + [&]() noexcept// end of macro
+  auto ANONYMOUS_VARIABLE(SCOPE_FAIL_STATE) = ::rtcsdk::details::ScopeGuardOnFail() + [&]() noexcept  // end of macro
 
 #define SCOPE_SUCCESS \
-  auto ANONYMOUS_VARIABLE(SCOPE_SUCCESS_STATE) = ::rtcsdk::details::ScopeGuardOnSuccess() + [&]()// end of macro
+  auto ANONYMOUS_VARIABLE(SCOPE_SUCCESS_STATE) = ::rtcsdk::details::ScopeGuardOnSuccess() + [&]()     // end of macro
 
 #define SCOPE_EXIT \
-  auto ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) = ::rtcsdk::details::ScopeGuardOnExit() + [&]() noexcept// end of macro
+  auto ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) = ::rtcsdk::details::ScopeGuardOnExit() + [&]() noexcept  // end of macro
 
 #define SCOPE_EXIT_CANCELLABLE(name) \
   auto name = ::rtcsdk::details::ScopeGuardOnExitCancellable() + [&]() noexcept// end of macro
+
+#pragma clang diagnostic pop
+#pragma warning( default : 4068 )

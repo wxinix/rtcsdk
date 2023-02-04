@@ -1,3 +1,6 @@
+#pragma warning( disable : 4068 )
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 
 namespace rtcsdk {
@@ -48,3 +51,6 @@ private:
 };
 
 }// namespace rtcsdk
+
+#pragma clang diagnostic pop
+#pragma warning( default : 4068 )

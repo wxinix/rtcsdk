@@ -11,8 +11,8 @@ namespace rtcsdk {
 
 namespace details {
 
-constexpr const size_t normal_guid_size = 36;//  XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-constexpr const size_t braced_guid_size = 38;// {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
+constexpr const size_t normal_guid_size = 36; //  00000000-0000-0000-0000-000000000000
+constexpr const size_t braced_guid_size = 38; // {00000000-0000-0000-0000-000000000000}
 
 /**
  Parse hexadecimal digit char to integer value.
@@ -110,13 +110,13 @@ template<typename T>
 constexpr const auto msvc_get_guid_workaround = T::get_guid();
 
 template<typename T>
-constexpr GUID get_interface_guid_impl(std::true_type, std::false_type)
+[[maybe_unused]] constexpr GUID get_interface_guid_impl(std::true_type, std::false_type)
 {
   return msvc_get_guid_workaround<T>;
 }
 
 template<typename T, typename Any>
-constexpr GUID get_interface_guid_impl(Any, std::true_type) noexcept
+[[maybe_unused]] constexpr GUID get_interface_guid_impl(Any, std::true_type) noexcept
 {
   return get_guid(static_cast<T *>(nullptr));
 }
@@ -145,7 +145,8 @@ constexpr GUID make_guid(const char (&str)[N])
   using namespace details;
 
   static_assert(N == (braced_guid_size + 1) || N == (normal_guid_size + 1),
-                "String GUID of form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} or XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX expected");
+                "String GUID of form {00000000-0000-0000-0000-000000000000} "
+                "or 00000000-0000-0000-0000-000000000000expected");
 
   if constexpr (N == (braced_guid_size + 1)) {
     if (str[0] != '{' || str[braced_guid_size - 1] != '}') {
@@ -158,13 +159,14 @@ constexpr GUID make_guid(const char (&str)[N])
 
 namespace literals {
 
-constexpr GUID operator"" _guid(const char *str, size_t N)
+constexpr GUID operator "" _guid(const char *str, size_t N)
 {
   using namespace std::string_literals;
   using namespace details;
 
   if (!(N == normal_guid_size || N == braced_guid_size)) {
-    throw std::domain_error{"String GUID of form {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX} or XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX expected"s};
+    throw std::domain_error{"String GUID of form {00000000-0000-0000-0000-000000000000} "
+                            "or 00000000-0000-0000-0000-000000000000 expected"s};
   }
 
   if (N == braced_guid_size && (str[0] != '{' || str[braced_guid_size - 1] != '}')) {

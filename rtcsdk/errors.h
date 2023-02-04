@@ -1,3 +1,6 @@
+#pragma warning( disable : 4068 )
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 #include <winerror.h>
 
@@ -21,7 +24,7 @@ public:
     return hr_;
   }
 
-  [[maybe_unused]] [[nodiscard]] constexpr bool is_aborted() const noexcept
+  [[nodiscard]] constexpr bool is_aborted() const noexcept
   {
     return hr_ == HRESULT_FROM_WIN32(ERROR_OPERATION_ABORTED);
   }
@@ -46,7 +49,7 @@ private:
 }
 
 /** Throw last win32 error as bad_hresult. */
-[[maybe_unused]] [[noreturn]] inline void throw_last_error()
+[[noreturn]] inline void throw_last_error()
 {
   throw_win32_error(GetLastError());
 }
@@ -64,3 +67,6 @@ private:
 }
 
 }// end of namespace rtcsdk
+
+#pragma clang diagnostic pop
+#pragma warning( default : 4068 )
