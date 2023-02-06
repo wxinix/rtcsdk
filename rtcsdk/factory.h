@@ -1,3 +1,6 @@
+#pragma warning( disable : 4068 )
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 #include <rtcsdk/interfaces.h>
 
@@ -53,3 +56,6 @@ inline HRESULT DllCanUnloadNow() noexcept
 }
 
 }// end namespace rtcsdk
+
+#pragma clang diagnostic pop
+#pragma warning( default : 4068 )

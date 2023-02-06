@@ -5,6 +5,7 @@
 
 #include <rtcsdk/interfaces.h>
 #include <rtcsdk/vector.h>
+#include <rtcsdk/factory.h>
 
 RTCSDK_DEFINE_INTERFACE(ISampleInterface, "{AB9A7AF1-6792-4D0A-83BE-8252A8432B45}")
 {
