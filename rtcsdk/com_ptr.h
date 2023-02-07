@@ -1,3 +1,7 @@
+#pragma warning( disable : 4068 )
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 
 #if !defined(RTCSDK_COM_NO_LEAK_DETECTION) && defined(_DEBUG)
@@ -227,17 +231,23 @@ private:
   }
 
 public:
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
+
   explicit operator bool() const noexcept
   {
     return !!p_;
   }
 
+#pragma clang diagnostic pop
+
   com_ptr() = default;
-  com_ptr(std::nullptr_t) noexcept
+  explicit com_ptr(std::nullptr_t) noexcept
   {
   }
 
-  com_ptr(T *p) noexcept: p_{p}
+  explicit com_ptr(T *p) noexcept: p_{p}
   {
     addref_pointer(p);
   }
@@ -249,17 +259,17 @@ public:
   }
 
   template<typename OtherInterface>
-  com_ptr(OtherInterface *punk) noexcept : com_ptr(punk, std::is_base_of<T, OtherInterface>{})
+  explicit com_ptr(OtherInterface *punk) noexcept : com_ptr(punk, std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  com_ptr(const com_ptr<OtherInterface> &o) noexcept : com_ptr(o, std::is_base_of<T, OtherInterface>{})
+  explicit com_ptr(const com_ptr<OtherInterface> &o) noexcept : com_ptr(o, std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  com_ptr(com_ptr<OtherInterface> &&o) noexcept : com_ptr(std::move(o), std::is_base_of<T, OtherInterface>{})
+  explicit com_ptr(com_ptr<OtherInterface> &&o) noexcept : com_ptr(std::move(o), std::is_base_of<T, OtherInterface>{})
   {
   }
 
@@ -290,10 +300,14 @@ public:
   }
 
   template<typename OtherInterface>
-  com_ptr(ref<OtherInterface> o) noexcept;
+  explicit com_ptr(ref<OtherInterface> o) noexcept;
 
   com_ptr &operator=(const com_ptr &o) noexcept
   {
+    if (this == &o) {
+      return *this;
+    }
+
     release_pointer(p_);
     p_ = o.p_;
     addref_pointer(p_);
@@ -485,22 +499,26 @@ class __declspec(empty_bases) ref
   }
 
 public:
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
   explicit operator bool() const noexcept
   {
     return !!p_;
   }
+#pragma clang diagnostic pop
 
   ref() = default;
 
-  ref(std::nullptr_t) noexcept
+  explicit ref(std::nullptr_t) noexcept
   {
   }
 
-  ref(const com_ptr<T> &o) noexcept: p_{o.p_}
+  explicit ref(const com_ptr<T> &o) noexcept: p_{o.p_}
   {
   }
 
-  ref(com_ptr<T> &&o) noexcept: p_{o.p_}
+  explicit ref(com_ptr<T> &&o) noexcept: p_{o.p_}
   {
 #if RTCSDK_HAS_CHECKED_REFS
     parent_ = &o;
@@ -511,19 +529,19 @@ public:
 
   // allow construction from derived interfaces
   template<typename OtherInterface>
-  ref(const com_ptr<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<T, OtherInterface>{})
+  explicit ref(const com_ptr<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  ref(com_ptr<OtherInterface> &&o) noexcept : ref(move_tag{},
-                                                  std::move(o),
-                                                  std::is_base_of<T, OtherInterface>{})
+  explicit ref(com_ptr<OtherInterface> &&o) noexcept : ref(move_tag{},
+                                                           std::move(o),
+                                                           std::is_base_of<T, OtherInterface>{})
   {
   }
 
   template<typename OtherInterface>
-  ref(const ref<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<T, OtherInterface>{})
+  explicit ref(const ref<OtherInterface> &o) noexcept : ref(o.get(), std::is_base_of<T, OtherInterface>{})
   {
   }
 
@@ -551,7 +569,7 @@ public:
   }
 #endif
 
-  ref(T *p) noexcept: p_{p}
+  explicit ref(T *p) noexcept: p_{p}
   {
   }
 
@@ -646,3 +664,6 @@ using ptr = rtcsdk::com_ptr<T>;
 template<typename T>
 using ref = rtcsdk::ref<T>;
 }// namespace com
+
+#pragma clang diagnostic pop
+#pragma warning( default : 4068 )
