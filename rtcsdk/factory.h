@@ -11,7 +11,7 @@ namespace details {
 class __declspec(novtable) Factory : public object<Factory, IClassFactory>
 {
 public:
-  Factory(const CLSID &clsid) noexcept: clsid_{clsid}
+  explicit Factory(const CLSID &clsid) noexcept: clsid_{clsid}
   {
   }
 
