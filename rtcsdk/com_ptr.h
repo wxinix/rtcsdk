@@ -71,7 +71,13 @@ inline void init_leak_detection() noexcept
   using namespace std::literals;
   SYSTEM_INFO si{};
   GetSystemInfo(&si);
-  HANDLE section = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, si.dwPageSize, (L"RTCSDK_LEAK_DETECTION_SECTION."s + std::to_wstring(GetCurrentProcessId())).c_str());
+  HANDLE section = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr,
+                                      PAGE_READWRITE,
+                                      0,
+                                      si.dwPageSize,
+                                      (L"RTCSDK_LEAK_DETECTION_SECTION."s +
+                                      std::to_wstring(GetCurrentProcessId())).c_str());
+
   *reinterpret_cast<DWORD *>(MapViewOfFile(section, FILE_MAP_WRITE, 0, 0, si.dwPageSize)) = TlsAlloc();
   // We intentionally leave section mapped
 }
@@ -81,9 +87,21 @@ inline DWORD get_slot() noexcept
   using namespace std::literals;
   SYSTEM_INFO si{};
   GetSystemInfo(&si);
-  HANDLE section = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, si.dwPageSize, (L"RTCSDK_LEAK_DETECTION_SECTION."s + std::to_wstring(GetCurrentProcessId())).c_str());
-  assert(section && GetLastError() == ERROR_ALREADY_EXISTS && "init_leak_detection() must be called from EXE module as early as possible! It has not yet been called.");
+  HANDLE section = CreateFileMappingW(INVALID_HANDLE_VALUE,
+                                      nullptr,
+                                      PAGE_READWRITE,
+                                      0,
+                                      si.dwPageSize,
+                                      (L"RTCSDK_LEAK_DETECTION_SECTION."s +
+                                      std::to_wstring(GetCurrentProcessId())).c_str());
+
+  assert(section && GetLastError() == ERROR_ALREADY_EXISTS &&
+                                      "init_leak_detection() must be called from EXE "
+                                      "module as early as possible! "
+                                      "It has not yet been called.");
+
   auto ptr = reinterpret_cast<DWORD *>(MapViewOfFile(section, FILE_MAP_WRITE, 0, 0, si.dwPageSize));
+
   assert(ptr);
   CloseHandle(section);
   auto ret = *ptr;
@@ -158,15 +176,12 @@ private:
       store_cookie();
     }
   }
-  //
 
-  //
   template<typename OtherInterface>
   com_ptr(com_ptr<OtherInterface> &&o, std::false_type) noexcept
   {
     if (o) {
-      if (SUCCEEDED(o->QueryInterface(get_interface_guid(interface_wrapper<T>{}),
-                                      reinterpret_cast<void **>(&p_)))) {
+      if (SUCCEEDED(o->QueryInterface(get_interface_guid(interface_wrapper<T>{}), reinterpret_cast<void **>(&p_)))) {
         store_cookie();
         o.release();
       }
