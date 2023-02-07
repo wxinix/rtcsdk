@@ -2,6 +2,7 @@
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 #pragma once
 
 #if !defined(RTCSDK_COM_NO_LEAK_DETECTION) && defined(_DEBUG)
@@ -247,6 +248,7 @@ private:
 
 public:
 
+#pragma warning( disable : 4068 )
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "Simplify"
 
@@ -262,10 +264,13 @@ public:
   {
   }
 
-  explicit com_ptr(T *p) noexcept: p_{p}
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "google-explicit-constructor"
+  com_ptr(T *p) noexcept: p_{p}
   {
     addref_pointer(p);
   }
+#pragma clang diagnostic pop
 
   // the following constructor does not call addref (attaching constructor)
   com_ptr(attach_t, T *p) noexcept: p_{p}
