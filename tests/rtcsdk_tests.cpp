@@ -35,6 +35,7 @@ private:
 
   int default_answer_;
 };
+
 TEST_SUITE_BEGIN("Interface Test Suite");
 
 TEST_CASE("sample interface works as expected.")
