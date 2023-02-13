@@ -35,12 +35,17 @@ private:
 
   int default_answer_;
 };
+TEST_SUITE_BEGIN("Interface Test Suite");
 
 TEST_CASE("sample interface works as expected.")
 {
   auto obj = sample_object::create_instance(42).to_ptr();
   CHECK_EQ(obj->sum(obj->get_answer(), 5), 47);
 }
+
+TEST_SUITE_END;
+
+TEST_SUITE_BEGIN("Utils Test Suite");
 
 TEST_CASE("vector type traits")
 {
@@ -49,3 +54,5 @@ TEST_CASE("vector type traits")
     CHECK(std::is_same_v<remove_front_t<vector<int, float, double>>, vector<float, double>>);
   }
 }
+
+TEST_SUITE_END;
