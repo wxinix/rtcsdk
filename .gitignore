@@ -38,3 +38,5 @@
 /.idea/*
 *.aps
 JSON
+cmake-build-debug
+cmake-build-release
