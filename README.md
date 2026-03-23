@@ -1,6 +1,6 @@
 # rtcsdk - Real Thin COM SDK
 
-This library is a header-only lightweight C++/20 wrapper for utilizing, declaring and implementing of Windows COM interfaces.  It is adapted from Alexander Bessonov's [`moderncom`](https://github.com/AlexBAV/moderncom) project, which was inspired by Kenny Kerr's `moderncpp` work.
+This library is a header-only lightweight C++/23 wrapper for utilizing, declaring and implementing of Windows COM interfaces.  It is adapted from Alexander Bessonov's [`moderncom`](https://github.com/AlexBAV/moderncom) project, which was inspired by Kenny Kerr's `moderncpp` work.
 
 ## Getting Started
 
@@ -39,10 +39,11 @@ Read further to find out the details!
 * Provides compile-time conversion of string GUIDs to `GUID`, which can be used independently of the rest of the library
 * Provides various customization points to simplify debugging or extend functionality of the library
 * Has built-in leak detection mechanism (that can be opted-in per class) to automatically search for leaked COM object references
+* Includes an IDL generator tool (`idlgen`) that can produce IDL files and type libraries from the C++ interface declarations
 
 ## Requirements
 
-The library requires C++20 and has been tested on Microsoft Visual C++ compiler Version 14.34 (Visual Studio 2022 17.4.0).
+The library requires C++23 and has been tested on Microsoft Visual C++ compiler (Visual Studio 2022).
 
 See also [FAQ](#faq) section below for more information.
 
@@ -63,6 +64,7 @@ Use the links for fast navigation:
 * [Constructing Objects](#constructing-objects)
 * [Implementing COM DLL Server](#implementing-com-dll-server)
 * [Automatic Leak Detection](#automatic-leak-detection)
+* [IDL Generator Tool](#idl-generator-tool)
 * [FAQ](#faq)
 
 ### GUID Helpers
@@ -107,7 +109,7 @@ class MyClass ...
 };
 ```
 
-A specialization of `get_guid` function is automatically added with [`RTCSDK_DEFINE_INTERFACE`](#RTCSDK_DEFINE_INTERFACE), [`RTCSDK_DEFINE_CLASS`](#RTCSDK_DEFINE_CLASS) and other macros.
+A specialization of `get_guid` function is automatically added with [`RTCSDK_DEFINE_INTERFACE`](#declaring-interfaces), [`RTCSDK_DEFINE_CLASS`](#default-construction-mechanism) and other macros.
 
 The following function can be used to get GUID from the interface:
 
@@ -222,8 +224,7 @@ The following methods are provided:
 | `release() noexcept`                                                                                                   | Releases a current interface and empties smart pointer object                                                                                           |
 | `reset() noexcept`                                                                                                     | Same as`release`                                                                                                                                        |
 | `Interface *operator ->() const noexcept`                                                                              | Dereferences the current smart pointer object                                                                                                           |
-| `bool operator ==(const com_ptr &o) const noexcept`                                                                    | Checks whether two smart pointer objects are equal                                                                                                      |
-| `bool operator !=(const com_ptr &o) const noexcept`                                                                    | Checks whether two smart pointer objects are not equal                                                                                                  |
+| `bool operator ==(const com_ptr &o) const noexcept`                                                                    | Checks whether two smart pointer objects are equal. `operator !=` is synthesized automatically.                                                         |
 | `bool operator <(const com_ptr &o) const noexcept`                                                                     | Introduces ordering                                                                                                                                     |
 | `void attach(Interface *p) noexcept`                                                                                   | Attaches a raw interface pointer. Asserts if smart pointer object is not empty                                                                          |
 | `[[nodiscard]] Interface *detach() noexcept`                                                                           | Detaches the currently stored raw interface pointer                                                                                                     |
@@ -235,7 +236,7 @@ The following methods are provided:
 | `HRESULT create_instance(const GUID &clsid, IUnknown *pUnkOuter = nullptr, DWORD dwClsContext = CLSCTX_ALL) noexcept`  | Same as`CoCreateInstance`                                                                                                                               |
 | `static com_ptr create(const GUID &clsid, IUnknown *pUnkOuter = nullptr, DWORD dwClsContext = CLSCTX_ALL)`             | Static method that calls`::CoCreateInstance` and returns a smart pointer object if successful. Otherwise, throws an instance of `corsl::hresult_error`. |
 
-Operators `==` and `!=` are also provided to any combination of `Interface *` and `const com_ptr<Interface> &` pairs.
+Operator `==` is also provided for any combination of `Interface *` and `const com_ptr<Interface> &` pairs. `operator !=` is automatically synthesized by the compiler (C++20).
 
 #### `com::ref`
 
@@ -335,7 +336,7 @@ The following constructors are provided:
 
 Assignment operators are prohibited for `ref` objects.
 
-The same comparison operators are defined for `ref` class as for `com_ptr` class.
+The same comparison operators are defined for `ref` class as for `com_ptr` class. `operator !=` is automatically synthesized.
 
 The following methods are available:
 
@@ -352,7 +353,7 @@ A `rtcsdk/interfaces.h` header provides infrastructure for working with COM inte
 
 #### Declaring Interfaces
 
-The following macros may be used to declare interfaces: {#BELT_DEFINE_INTERFACE}
+The following macros may be used to declare interfaces:
 
 ```C++
 RTCSDK_DEFINE_INTERFACE(name, guid)
@@ -457,7 +458,7 @@ class object;
   static com_ptr<IUnknown> create_aggregate(IUnknown *pOuterUnknown, Args &&...args);
   ```
 
-  Create new instance of `Derived` aggregating `pOuterUnknown`. `Derived` must has [`supports_aggregation`](#supports_agregation) trait (see below).
+  Create new instance of `Derived` aggregating `pOuterUnknown`. `Derived` must have [`supports_aggregation`](#supports_aggregation) trait (see below).
 
   Arguments, if passed are perfect-forwarded to `Derived`'s constructor.
 
@@ -660,7 +661,7 @@ A trait class is a special class that `Derived` must directly derive from to cha
 * [`singleton_factory`](#singleton_factory)
 * [`single_cached_instance`](#single_cached_instance)
 * [`supports_aggregation`](#supports_aggregation)
-* [`increments_module_count`](#increments_module_count)
+* [`increments_module_count`](#implements_module_count)
 * [`enable_leak_detection`](#enable_leak_detection)
 
 Some of these trait classes automatically "propagate" down on inheritance chain. That is, if an implementation proxy class or even an interface class specifies a trait, it will also be present in any derived final class.
@@ -938,7 +939,7 @@ Leak detection is only enabled in debug builds.
 
 The following pre-requisites must be done in order for the leak detection to work:
 
-1. `Boost.StackTrace` library is a dependency. If you cannot use `boost`, you must disable automatic leak detection by defining the following macro before including any library header:
+1. The C++23 `<stacktrace>` header is required for leak detection. If your compiler does not support it, you must disable automatic leak detection by defining the following macro before including any library header:
 
    ```C++
    #define RTCSDK_COM_NO_LEAK_DETECTION
@@ -960,6 +961,207 @@ Once leaked objects are found, add them to the Watch window in Visual Studio and
 
 1. Leak detection is built into `com_ptr` and `object` classes and therefore is unable to track calls to `AddRef` and `Release` made by other components. In other words, it always assumes that only `com_ptr` class makes calls to `AddRef` and `Release`.
 2. Leak detection does not currently find leaked objects. Once a leaked object is found by other means, it can be viewed in the debugger to see a list of stack traces.
+
+## IDL Generator Tool
+
+The library includes `idlgen`, a command-line tool that generates IDL (Interface Definition Language) files from C++ interface declarations. This bridges the gap between rtcsdk's pure-C++ interface definitions and the broader COM ecosystem — enabling type library (`.tlb`) generation for cross-language interop, automation clients, and proxy/stub marshaling, all without maintaining separate IDL files.
+
+### Why Use This Tool?
+
+When you declare interfaces with `RTCSDK_DEFINE_INTERFACE`, the interface contract lives entirely in C++ headers. This is ideal for in-process C++ consumers, but other scenarios require IDL or type libraries:
+
+* **.NET interop** — `tlbimp` needs a `.tlb` to generate managed wrappers
+* **Scripting / automation** — VBScript, PowerShell, and late-binding clients discover interfaces through type libraries
+* **Out-of-process COM** — proxy/stub DLLs are generated from IDL by MIDL
+* **Documentation** — IDL serves as a language-neutral interface specification
+
+`idlgen` lets you keep your single source of truth in C++ while generating IDL on demand.
+
+### Building
+
+The tool is built automatically as part of the CMake project:
+
+```bash
+cmake -B build -G "Visual Studio 17 2022"
+cmake --build build --config Release --target idlgen
+```
+
+The resulting executable is at `build/tools/idlgen/Release/idlgen.exe`.
+
+### Usage
+
+```
+idlgen [options] <input-files...>
+```
+
+| Option                       | Description                                                                         |
+|------------------------------|-------------------------------------------------------------------------------------|
+| `-o <dir>`                   | Output directory for generated `.idl` files (default: current directory)            |
+| `--library-name <name>`      | Library name for the IDL library block (default: derived from first input filename) |
+| `--library-uuid <uuid>`      | Library UUID — if provided, a `library` block is generated for `.tlb` compilation   |
+| `--clang-format-path <path>` | Path to `clang-format` executable (default: search PATH)                            |
+| `--no-clang-format`          | Disable clang-format preprocessing even if available                                |
+| `--midl`                     | Invoke MIDL compiler after generating `.idl` to produce `.tlb`                      |
+| `--midl-path <path>`         | Path to `midl.exe` (default: search PATH)                                           |
+| `--verbose`                  | Print parsing details, heuristic decisions, and warnings                            |
+| `--help`                     | Show help                                                                           |
+
+### Examples
+
+Generate IDL from a header:
+
+```bash
+idlgen myinterfaces.h -o output/
+```
+
+Generate IDL with a library block and compile to type library:
+
+```bash
+idlgen myinterfaces.h -o output/ \
+    --library-name MyLib \
+    --library-uuid "12345678-1234-1234-1234-123456789ABC" \
+    --midl
+```
+
+Process multiple headers:
+
+```bash
+idlgen include/interfaces1.h include/interfaces2.h -o output/ --verbose
+```
+
+### Processing Pipeline
+
+The tool processes input files through a four-stage pipeline:
+
+```
+C++ Headers → Preprocessor → Parser → Type Mapper → IDL Generator → .idl [→ MIDL → .tlb]
+```
+
+1. **Preprocessor** — Normalizes the C++ source: optionally runs `clang-format` for syntactically-aware formatting, strips comments (preserving direction annotations), removes C++ attributes (`[[nodiscard]]`, etc.) and preprocessor directives, collapses whitespace.
+
+2. **Parser** — Finds `RTCSDK_DEFINE_INTERFACE` and `RTCSDK_DEFINE_INTERFACE_BASE` macro invocations using regex matching, extracts interface bodies via brace matching, and parses individual virtual method declarations.
+
+3. **Type Mapper** — Converts C++ types to their IDL equivalents (e.g., `int` → `long`, `DWORD` → `unsigned long`, `BSTR` → `BSTR`). Unknown types that look like COM interfaces (starting with `I` + uppercase) are passed through. Unmappable types like `std::wstring` generate warnings.
+
+4. **IDL Generator** — Produces standard IDL output with `[object]`, `uuid()`, and `pointer_default(unique)` attributes. Optionally generates a `library` block for type library compilation.
+
+### Automatic Return Type Transformation
+
+Standard COM IDL expects methods to return `HRESULT` with actual results passed via `[out, retval]` parameters. Since rtcsdk allows non-HRESULT return types, the tool automatically transforms them:
+
+```C++
+// C++ input:
+RTCSDK_DEFINE_INTERFACE(ISampleInterface, "{AB9A7AF1-6792-4D0A-83BE-8252A8432B45}")
+{
+  virtual int sum(int a, int b) const noexcept = 0;
+  virtual int get_answer() const noexcept = 0;
+};
+```
+
+```idl
+// Generated IDL:
+[
+  object,
+  uuid(AB9A7AF1-6792-4D0A-83BE-8252A8432B45),
+  pointer_default(unique)
+]
+interface ISampleInterface : IUnknown
+{
+    HRESULT sum([in] long a, [in] long b, [out, retval] long* pResult);
+    HRESULT get_answer([out, retval] long* pResult);
+};
+```
+
+Methods that already return `HRESULT` or `void` are emitted as-is.
+
+### Parameter Direction Annotations
+
+You can explicitly annotate parameters with IDL direction attributes using comments:
+
+```C++
+virtual HRESULT GetData(/*[in]*/ int id, /*[out,retval]*/ BSTR* result) = 0;
+virtual HRESULT SetConfig(/*[in]*/ BSTR key, /*[in]*/ VARIANT value) = 0;
+virtual HRESULT Transfer(/*[in,out]*/ LONG* pCount) = 0;
+```
+
+Supported annotations: `/*[in]*/`, `/*[out]*/`, `/*[in,out]*/`, `/*[out,retval]*/`.
+
+These annotations are preserved through the preprocessing stage and take precedence over heuristics.
+
+### Direction Heuristics
+
+When annotations are omitted, the tool infers parameter direction from C++ type patterns:
+
+| C++ Pattern                                | Inferred IDL Direction | Rationale                                                 |
+|--------------------------------------------|------------------------|-----------------------------------------------------------|
+| `const T*`, `const T&`                     | `[in]`                 | Const pointer/reference implies read-only                 |
+| Primitive by value (`int`, `float`, etc.)  | `[in]`                 | Value types are inherently input-only                     |
+| `T**`                                      | `[out]`                | Double pointer is the standard COM output pattern         |
+| Last non-const `T*` with `HRESULT` return  | `[out, retval]`        | Convention: last output param is the logical return value |
+| Other non-const `T*` with `HRESULT` return | `[in, out]`            | Non-last pointer params are assumed bidirectional         |
+| Non-const `T*` with non-`HRESULT` return   | `[in, out]`            | Conservative default for mutable pointers                 |
+
+For maximum accuracy, use explicit annotations on ambiguous parameters.
+
+### Type Mapping Reference
+
+The following C++ to IDL type mappings are built in:
+
+| C++ Type                | IDL Type        | C++ Type          | IDL Type       |
+|-------------------------|-----------------|-------------------|----------------|
+| `int`                   | `long`          | `HRESULT`         | `HRESULT`      |
+| `unsigned int`          | `unsigned long` | `BSTR`            | `BSTR`         |
+| `short`                 | `short`         | `VARIANT`         | `VARIANT`      |
+| `long`                  | `long`          | `VARIANT_BOOL`    | `VARIANT_BOOL` |
+| `DWORD`                 | `unsigned long` | `GUID` / `REFIID` | `GUID`         |
+| `BYTE`                  | `byte`          | `float`           | `float`        |
+| `BOOL`                  | `long`          | `double`          | `double`       |
+| `long long` / `__int64` | `hyper`         | `void`            | `void`         |
+| `LPWSTR`                | `LPWSTR`        | `LPCWSTR`         | `LPCWSTR`      |
+
+COM interface types (`IUnknown`, `IDispatch`, `IStream`, etc.) and user-defined interfaces following the `IFoo` naming convention are passed through as-is.
+
+Pointer indirection is preserved: `int*` → `long*`, `IUnknown**` → `IUnknown**`. References (`&`) are mapped to pointers in IDL.
+
+Types that cannot be mapped (e.g., `std::wstring`, `std::vector`) generate a warning and are passed through verbatim (they will fail MIDL compilation).
+
+### Preprocessing Details
+
+The preprocessor normalizes C++ source in two phases:
+
+**Phase A: clang-format (optional)** — If `clang-format` is found on PATH, the tool pipes the source through it using a built-in configuration tuned for parseability (not style):
+* `ColumnLimit: 0` — prevents line wrapping
+* `BinPackParameters: false` — one parameter per line
+* `BreakBeforeBraces: Allman` — consistent brace placement
+
+If `clang-format` is not available, the tool falls back to a built-in whitespace normalizer. Use `--no-clang-format` to skip this phase entirely.
+
+**Phase B: Custom cleanup (always runs)** — Strips line comments and block comments (preserving `/*[in]*/`-style direction annotations), removes C++ attributes (`[[nodiscard]]`, `[[maybe_unused]]`), strips preprocessor directives (`#if`, `#endif`, `#pragma`), and collapses whitespace.
+
+### Library Block Generation
+
+When `--library-uuid` is provided, the tool generates an IDL library block suitable for MIDL type library compilation:
+
+```idl
+[
+  uuid(12345678-1234-1234-1234-123456789ABC),
+  version(1.0)
+]
+library MyLib
+{
+    importlib("stdole2.tlb");
+    interface ISampleInterface;
+};
+```
+
+This block references all parsed interfaces and can be compiled with MIDL to produce a `.tlb` file.
+
+### Limitations
+
+* The tool is a lightweight regex-based parser, not a full C++ parser. It handles standard `RTCSDK_DEFINE_INTERFACE` patterns but may not handle complex template-heavy method signatures.
+* Interface inheritance is determined by the macro used: `RTCSDK_DEFINE_INTERFACE` implies `IUnknown`; `RTCSDK_DEFINE_INTERFACE_BASE` takes an explicit base.
+* Only pure virtual methods (`= 0`) inside interface bodies are extracted. Non-virtual methods, static methods, and nested types are ignored.
+* The generated IDL signature may differ from the C++ signature when return type transformation is applied. The C++ and IDL interfaces are not ABI-compatible across this transformation — the IDL version is intended for type library generation, not direct vtable matching.
 
 ## FAQ
 

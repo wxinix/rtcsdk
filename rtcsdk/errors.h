@@ -1,7 +1,6 @@
-#pragma warning( disable : 4068 )
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
+#pragma warning(disable : 4068)
+
 #include <winerror.h>
 
 namespace rtcsdk {
@@ -13,29 +12,29 @@ namespace rtcsdk {
 class bad_hresult
 {
 public:
-  constexpr bad_hresult() = default;
+    constexpr bad_hresult() = default;
 
-  explicit constexpr bad_hresult(const HRESULT hr) noexcept: hr_{hr}
-  {
-  }
+    explicit constexpr bad_hresult(const HRESULT hr) noexcept : hr_{hr}
+    {
+    }
 
-  [[nodiscard]] constexpr HRESULT hr() const noexcept
-  {
-    return hr_;
-  }
+    [[nodiscard]] constexpr HRESULT hr() const noexcept
+    {
+        return hr_;
+    }
 
-  [[nodiscard]] constexpr bool is_aborted() const noexcept
-  {
-    return hr_ == HRESULT_FROM_WIN32(ERROR_OPERATION_ABORTED);
-  }
+    [[nodiscard]] constexpr bool is_aborted() const noexcept
+    {
+        return hr_ == HRESULT_FROM_WIN32(ERROR_OPERATION_ABORTED);
+    }
 
 private:
-  HRESULT hr_{E_FAIL};
+    HRESULT hr_{E_FAIL};
 };
 
 [[noreturn]] inline void throw_bad_hresult(HRESULT hr)
 {
-  throw bad_hresult{hr}; // NOLINT(hicpp-exception-baseclass)
+    throw bad_hresult{hr};// NOLINT(hicpp-exception-baseclass)
 }
 
 /**
@@ -45,13 +44,13 @@ private:
  */
 [[noreturn]] inline void throw_win32_error(DWORD err)
 {
-  throw_bad_hresult(HRESULT_FROM_WIN32(err));
+    throw_bad_hresult(HRESULT_FROM_WIN32(err));
 }
 
 /** Throw last win32 error as bad_hresult. */
 [[noreturn]] inline void throw_last_error()
 {
-  throw_win32_error(GetLastError());
+    throw_win32_error(GetLastError());
 }
 
 /**
@@ -59,14 +58,14 @@ private:
 
  @param     hr  The HRESULT value.
  */
-[[noreturn]] inline void throw_on_failed(HRESULT hr)
+inline void throw_on_failed(HRESULT hr)
 {
-  if (FAILED(hr)) {
-    throw_bad_hresult(hr);
-  }
+    if (FAILED(hr)) {
+        throw_bad_hresult(hr);
+    }
 }
 
 }// end of namespace rtcsdk
 
 #pragma clang diagnostic pop
-#pragma warning( default : 4068 )
+#pragma warning(default : 4068)

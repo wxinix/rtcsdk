@@ -3,3 +3,4 @@ set(CMAKE_CXX_STANDARD 23)
 project(rtcsdk)
 
 add_subdirectory(tests)
+add_subdirectory(tools)
