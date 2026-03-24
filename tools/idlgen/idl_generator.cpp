@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #include "idl_generator.h"
 
 #include <format>
@@ -6,7 +9,7 @@ namespace idlgen {
 
 namespace {
 
-std::string direction_string(ParamDirection dir)
+std::string direction_string(const ParamDirection dir)
 {
     switch (dir) {
         case ParamDirection::In:

@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
@@ -77,10 +80,10 @@ TEST_CASE("parse HRESULT method with annotations")
     CHECK_EQ(m.params[1].direction, ParamDirection::OutRetval);
 }
 
-TEST_CASE("parse RTCSDK_DEFINE_INTERFACE")
+TEST_CASE("parse COM_INTERFACE")
 {
     std::string source = R"(
-RTCSDK_DEFINE_INTERFACE(ISampleInterface, "{AB9A7AF1-6792-4D0A-83BE-8252A8432B45}")
+COM_INTERFACE(ISampleInterface, "{AB9A7AF1-6792-4D0A-83BE-8252A8432B45}")
 {
   virtual int sum(int a, int b) const noexcept = 0;
   virtual int get_answer() const noexcept = 0;

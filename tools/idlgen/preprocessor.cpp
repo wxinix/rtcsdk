@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #include "preprocessor.h"
 
 #include <cstdlib>
@@ -114,8 +117,7 @@ std::string strip_comments(const std::string &source)
             if (i + 1 < source.size())
                 i += 2;// skip */
 
-            const auto comment = source.substr(start, i - start);
-            if (is_direction_annotation(comment)) {
+            if (const auto comment = source.substr(start, i - start); is_direction_annotation(comment)) {
                 result += comment;// preserve
             } else {
                 result += ' ';// replace with space
@@ -146,8 +148,7 @@ std::string strip_preprocessor(const std::string &source)
 
     while (std::getline(stream, line)) {
         // Skip lines starting with # (after whitespace)
-        const auto pos = line.find_first_not_of(" \t");
-        if (pos != std::string::npos && line[pos] == '#') {
+        if (const auto pos = line.find_first_not_of(" \t"); pos != std::string::npos && line[pos] == '#') {
             result += '\n';
             continue;
         }
@@ -192,8 +193,7 @@ std::string preprocess(const std::string &source,
 
     // Phase A: optional clang-format
     if (!config.no_clang_format) {
-        auto cf_path = find_clang_format(config.clang_format_path);
-        if (!cf_path.empty()) {
+        if (const auto cf_path = find_clang_format(config.clang_format_path); !cf_path.empty()) {
             if (config.verbose) {
                 warnings.emplace_back("Using clang-format: " + cf_path.string());
             }

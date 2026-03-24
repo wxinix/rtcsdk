@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #pragma once
 
 #include <expected>

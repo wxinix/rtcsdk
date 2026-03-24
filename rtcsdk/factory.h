@@ -1,7 +1,9 @@
-#pragma once
-#pragma warning(disable : 4068)
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
 
-#include <rtcsdk/interfaces.h>
+#pragma once
+
+#include <rtcsdk/rtcsdk.h>
 
 namespace rtcsdk {
 
@@ -16,7 +18,7 @@ public:
 
     HRESULT STDMETHODCALLTYPE CreateInstance(IUnknown *pUnkOuter, REFIID riid, void **ppvObject) noexcept override
     {
-        return rtcsdk::create_object(clsid_, riid, ppvObject, pUnkOuter);
+        return create_object(clsid_, riid, ppvObject, pUnkOuter);
     }
 
     HRESULT STDMETHODCALLTYPE LockServer(const BOOL fLock) noexcept override
@@ -38,7 +40,7 @@ private:
 inline HRESULT DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) noexcept
 {
     try {
-        auto factory = details::Factory::create_instance(rclsid).to_ptr<IUnknown>();
+        auto factory = details::Factory::create_instance(rclsid).to_ptr<IClassFactory>();
         return factory->QueryInterface(riid, ppv);
     } catch (const std::bad_alloc &) {
         return E_OUTOFMEMORY;
@@ -55,6 +57,3 @@ inline HRESULT DllCanUnloadNow() noexcept
 }
 
 }// end namespace rtcsdk
-
-
-#pragma warning(default : 4068)

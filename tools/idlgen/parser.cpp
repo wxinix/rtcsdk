@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #include "parser.h"
 
 #include <algorithm>
@@ -277,8 +280,7 @@ ParseResult<MethodDecl> parse_method(const std::string &line)
     method.needs_transform = (method.cpp_return_type != "HRESULT" && method.cpp_return_type != "void");
 
     // Parse parameters
-    const auto param_strings = split_params(trim(params_str));
-    for (const auto &ps : param_strings) {
+    for (const auto param_strings = split_params(trim(params_str)); const auto &ps : param_strings) {
         auto param_result = parse_param(ps);
         if (!param_result) return std::unexpected(param_result.error());
         method.params.emplace_back(std::move(*param_result));
@@ -297,9 +299,9 @@ ParseResult<std::vector<InterfaceDecl>> parse_interfaces(
     std::vector<InterfaceDecl> interfaces;
 
     static const std::regex iface_re( // NOLINT
-        R"---(RTCSDK_DEFINE_INTERFACE\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\))---");
+        R"---((?:COM_INTERFACE|RTCSDK_DEFINE_INTERFACE)\s*\(\s*(\w+)\s*,\s*"([^"]+)"\s*\))---");
     static const std::regex iface_base_re( // NOLINT
-        R"---(RTCSDK_DEFINE_INTERFACE_BASE\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*\))---");
+        R"---((?:COM_INTERFACE_BASE|RTCSDK_DEFINE_INTERFACE_BASE)\s*\(\s*(\w+)\s*,\s*(\w+)\s*,\s*"([^"]+)"\s*\))---");
 
     auto process_interface = [&](const std::string &name,
                                  const std::string &base,
@@ -351,8 +353,7 @@ ParseResult<std::vector<InterfaceDecl>> parse_interfaces(
     // Process RTCSDK_DEFINE_INTERFACE
     {
         auto it = std::sregex_iterator(preprocessed_source.begin(), preprocessed_source.end(), iface_re);
-        auto end = std::sregex_iterator();
-        for (; it != end; ++it) {
+        for (auto end = std::sregex_iterator(); it != end; ++it) {
             auto result = process_interface((*it)[1].str(), "IUnknown", (*it)[2].str(),
                                             it->position() + it->length());
             if (!result) return std::unexpected(result.error());
@@ -363,8 +364,7 @@ ParseResult<std::vector<InterfaceDecl>> parse_interfaces(
     // Process RTCSDK_DEFINE_INTERFACE_BASE
     {
         auto it = std::sregex_iterator(preprocessed_source.begin(), preprocessed_source.end(), iface_base_re);
-        auto end = std::sregex_iterator();
-        for (; it != end; ++it) {
+        for (auto end = std::sregex_iterator(); it != end; ++it) {
             auto result = process_interface((*it)[1].str(), (*it)[2].str(), (*it)[3].str(),
                                             it->position() + it->length());
             if (!result) return std::unexpected(result.error());

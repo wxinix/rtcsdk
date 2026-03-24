@@ -1,7 +1,9 @@
 The MIT License (MIT)
 
-Copyright © 2023 Wuping Xin
-Copyright © 2020 Alexander Bessonov, HHD Software Ltd
+Copyright © 2022-2026 Wuping Xin
+
+Inspired by Alexander Bessonov's moderncom (https://github.com/AlexBAV/moderncom).
+The implementation is entirely new.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the “Software”), to deal

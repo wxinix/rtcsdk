@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #include "idl_generator.h"
 #include "parser.h"
 #include "preprocessor.h"
@@ -10,7 +13,6 @@
 #include <fstream>
 #include <iostream>
 #include <print>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -49,9 +51,8 @@ std::expected<CliConfig, std::string> parse_args(int argc, char *argv[])
     CliConfig config;
 
     for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
 
-        if (arg == "--help" || arg == "-h") {
+        if (std::string arg = argv[i]; arg == "--help" || arg == "-h") {
             print_usage();
             std::exit(0);
         } else if (arg == "-o" && i + 1 < argc) {
@@ -87,7 +88,7 @@ std::expected<CliConfig, std::string> parse_args(int argc, char *argv[])
 int run_midl(const fs::path &idl_file, const fs::path &midl_path, bool verbose)
 {
     std::string midl_exe = midl_path.empty() ? "midl.exe" : midl_path.string();
-    std::string cmd = std::format("\"{}\" \"{}\"", midl_exe, idl_file.string());
+    std::string cmd = std::format(R"("{}" "{}")", midl_exe, idl_file.string());
 
     if (verbose) {
         std::println(stderr, "Running: {}", cmd);
@@ -177,13 +178,13 @@ int main(int argc, char *argv[])
     fs::create_directories(config.output_dir);
 
     // Generate IDL
-    idlgen::GeneratorConfig gen_config{
-        .library_name = config.library_name.empty() ? stem : config.library_name,
-        .library_uuid = config.library_uuid,
-        .generate_library_block = !config.library_uuid.empty(),
-    };
 
     {
+        idlgen::GeneratorConfig gen_config{
+            .library_name = config.library_name.empty() ? stem : config.library_name,
+            .library_uuid = config.library_uuid,
+            .generate_library_block = !config.library_uuid.empty(),
+        };
         std::ofstream out{output_file};
         if (!out) {
             std::println(stderr, "Error: Cannot open output file: {}", output_file.string());

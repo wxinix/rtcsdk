@@ -1,3 +1,6 @@
+// Copyright (c) 2022-2026 Wuping Xin. All rights reserved.
+// MIT License. See LICENSE.md for details.
+
 #pragma once
 
 #include <filesystem>
@@ -7,7 +10,7 @@
 namespace idlgen {
 
 // Embedded clang-format config tuned for maximum parseability (not style)
-inline constexpr const char *clang_format_config = R"(
+inline constexpr auto clang_format_config = R"(
 BasedOnStyle: LLVM
 ColumnLimit: 0
 BinPackParameters: false
