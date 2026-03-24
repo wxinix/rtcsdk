@@ -40,7 +40,7 @@ private:
 inline HRESULT DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) noexcept
 {
     try {
-        auto factory = details::Factory::create_instance(rclsid).to_ptr<IClassFactory>();
+        const auto factory = details::Factory::create_instance(rclsid).to_ptr<IClassFactory>();
         return factory->QueryInterface(riid, ppv);
     } catch (const std::bad_alloc &) {
         return E_OUTOFMEMORY;

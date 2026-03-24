@@ -386,28 +386,20 @@ private:
     }
 
 public:
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "Simplify"
-
     explicit operator bool() const noexcept
     {
         return !!p_;
     }
-
-#pragma clang diagnostic pop
 
     com_ptr() = default;
     explicit com_ptr(std::nullptr_t) noexcept
     {
     }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "google-explicit-constructor"
     com_ptr(T *p) noexcept : p_{p}// NOLINT(google-explicit-constructor)
     {
         addref_pointer(p);
     }
-#pragma clang diagnostic pop
 
     // the following constructor does not call addref (attaching constructor)
     com_ptr(attach_t, T *p) noexcept : p_{p}
@@ -655,13 +647,10 @@ class __declspec(empty_bases) ref
 #endif
 
 public:
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "Simplify"
     explicit operator bool() const noexcept
     {
         return !!p_;
     }
-#pragma clang diagnostic pop
 
     ref() = default;
 
