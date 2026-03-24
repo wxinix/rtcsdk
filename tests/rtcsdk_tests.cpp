@@ -364,6 +364,131 @@ TEST_CASE("value_on_stack basic usage")
 
 TEST_SUITE_END;
 
+TEST_SUITE_BEGIN("Error Handling Extended");
+
+TEST_CASE("bad_hresult default has E_FAIL")
+{
+    rtcsdk::bad_hresult err;
+    CHECK_EQ(err.hr(), E_FAIL);
+}
+
+TEST_CASE("bad_hresult is_aborted")
+{
+    rtcsdk::bad_hresult aborted{HRESULT_FROM_WIN32(ERROR_OPERATION_ABORTED)};
+    CHECK(aborted.is_aborted());
+
+    rtcsdk::bad_hresult not_aborted{E_FAIL};
+    CHECK_FALSE(not_aborted.is_aborted());
+}
+
+TEST_CASE("throw_win32_error throws correct HRESULT")
+{
+    try {
+        rtcsdk::throw_win32_error(ERROR_FILE_NOT_FOUND);
+    } catch (const rtcsdk::bad_hresult &e) {
+        CHECK_EQ(e.hr(), HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND));
+    }
+}
+
+TEST_SUITE_END;
+
+TEST_SUITE_BEGIN("GUID Extended");
+
+TEST_CASE("make_guid parses all Data4 bytes")
+{
+    constexpr auto guid = rtcsdk::make_guid("{AB9A7AF1-6792-4D0A-83BE-8252A8432B45}");
+    CHECK_EQ(guid.Data4[0], 0x83);
+    CHECK_EQ(guid.Data4[1], 0xBE);
+    CHECK_EQ(guid.Data4[2], 0x82);
+    CHECK_EQ(guid.Data4[3], 0x52);
+    CHECK_EQ(guid.Data4[4], 0xA8);
+    CHECK_EQ(guid.Data4[5], 0x43);
+    CHECK_EQ(guid.Data4[6], 0x2B);
+    CHECK_EQ(guid.Data4[7], 0x45);
+}
+
+TEST_CASE("two different GUIDs are not equal")
+{
+    constexpr auto a = rtcsdk::make_guid("{AB9A7AF1-6792-4D0A-83BE-8252A8432B45}");
+    constexpr auto b = rtcsdk::make_guid("{12345678-ABCD-4EF0-1234-567890ABCDEF}");
+    CHECK_FALSE(IsEqualGUID(a, b));
+}
+
+TEST_SUITE_END;
+
+TEST_SUITE_BEGIN("Object Holder");
+
+TEST_CASE("object_holder obj() allows pre-conversion access")
+{
+    auto holder = sample_object::create_instance(10);
+    // obj() returns Derived* — access through interface pointer
+    auto *iface = static_cast<ISampleInterface *>(holder.obj());
+    CHECK_EQ(iface->get_answer(), 10);
+    auto ptr = std::move(holder).to_ptr();
+    CHECK_EQ(ptr->get_answer(), 10);
+}
+
+TEST_SUITE_END;
+
+TEST_SUITE_BEGIN("QueryInterface Edge Cases");
+
+TEST_CASE("QI for unsupported interface returns E_NOINTERFACE")
+{
+    auto obj = sample_object::create_instance(1).to_ptr();
+    constexpr auto fake_iid = rtcsdk::make_guid("{00000000-0000-0000-0000-FFFFFFFFFFFF}");
+    void *result = nullptr;
+    CHECK_EQ(obj->QueryInterface(fake_iid, &result), E_NOINTERFACE);
+    CHECK_EQ(result, nullptr);
+}
+
+TEST_CASE("QI for IUnknown always succeeds")
+{
+    auto obj = sample_object::create_instance(1).to_ptr();
+    rtcsdk::com_ptr<IUnknown> unk;
+    CHECK_EQ(obj->QueryInterface(__uuidof(IUnknown), reinterpret_cast<void **>(unk.put())), S_OK);
+    CHECK(unk);
+}
+
+TEST_SUITE_END;
+
+TEST_SUITE_BEGIN("Intermediate Test Suite");
+
+COM_INTERFACE(IPartialInterface, "{11111111-2222-3333-4444-555566667777}")
+{
+    virtual int method_a() const noexcept = 0;
+    virtual int method_b() const noexcept = 0;
+};
+
+// Partial implementation via intermediate
+class partial_impl : public rtcsdk::intermediate<partial_impl, IPartialInterface>
+{
+public:
+    int method_a() const noexcept override { return 100; }
+};
+
+// Final class completes the implementation
+class final_object : public rtcsdk::object<final_object, partial_impl>
+{
+public:
+    int method_b() const noexcept override { return 200; }
+};
+
+TEST_CASE("intermediate provides partial implementation")
+{
+    auto obj = final_object::create_instance().to_ptr<IPartialInterface>();
+    CHECK_EQ(obj->method_a(), 100);
+    CHECK_EQ(obj->method_b(), 200);
+}
+
+TEST_CASE("intermediate object supports QI for its interface")
+{
+    auto obj = final_object::create_instance().to_ptr<IPartialInterface>();
+    rtcsdk::com_ptr<IUnknown> unk;
+    CHECK_EQ(obj->QueryInterface(__uuidof(IUnknown), reinterpret_cast<void **>(unk.put())), S_OK);
+    CHECK(unk);
+}
+
+TEST_SUITE_END;
 
 // ── Connection Point Tests ──────────────────────────────────────────────────
 
