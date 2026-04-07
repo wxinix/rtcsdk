@@ -2,7 +2,9 @@
 
 A header-only, lightweight C++23 library for declaring and implementing Windows COM interfaces in pure C++.
 
-**Why "Real Thin"?** ATL is a heavyweight framework: macros, COM maps, registration wizards, IDL files, and a runtime dependency on `atl*.dll`. rtcsdk strips COM support to the bare essentials — only one mandatory and two opt-in headers, no dependencies beyond the C++ standard library and Windows SDK, pure compile-time codegen. The layer between your code and raw COM is as thin as it can be while still being useful.
+**Why "Real Thin"?** 
+
+ATL is a heavyweight framework: macros, COM maps, registration wizards, IDL files, and a runtime dependency on `atl*.dll`. Unlike ATL, rtcsdk strips COM support to the bare essentials — only one mandatory and two opt-in headers, no dependencies beyond the C++ standard library and Windows SDK, pure compile-time codegen. The layer between your code and raw COM is as thin as it can be while still being useful.
 
 rtcsdk is inspired by Alexander Bessonov's [`moderncom`](https://github.com/AlexBAV/moderncom) project and Kenny Kerr's `moderncpp` work. It shares the same design philosophy — replacing ATL with modern C++ — but **the implementation is entirely new**, targeting C++23 with concepts, `<stacktrace>`, and constexpr GUID parsing throughout.
 
